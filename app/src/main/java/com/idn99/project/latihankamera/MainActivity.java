@@ -1,10 +1,12 @@
 package com.idn99.project.latihankamera;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+//import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -89,15 +91,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String imageFileName = JPEG_FILE_PREFIX + timeStamp;
 
         File albumF = getAlbumDir();
-        File imageF = File.createTempFile(imageFileName, JPEG_FILE_SUFFIX, albumF);
 
-        return imageF;
+        return File.createTempFile(imageFileName, JPEG_FILE_SUFFIX, albumF);
     }
 
-    private File setUpPhotoFile() throws IOException {
-        File f = createImageFile();
-
-        mCurrentPhotoPath = f.getAbsolutePath();
+    private File setUpPhotoFile(){
+        File f = null;
+        try {
+            f = createImageFile();
+            mCurrentPhotoPath = f.getAbsolutePath();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return f;
     }
 
@@ -105,17 +110,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.cameraBButton:
                 ambilGambarIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                File f = null;
-                try {
-                    f = setUpPhotoFile();
-                    mCurrentPhotoPath = f.getAbsolutePath();
-                    ambilGambarIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    f = null;
-                    mCurrentPhotoPath = null;
-                }
-                startActivityForResult(ambilGambarIntent, AMBIL_FOTO_BESAR);
+                startActivityForResult(ambilGambarIntent,  AMBIL_FOTO_BESAR);
                 break;
             case R.id.cameraSButton:
                 ambilGambarIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -131,18 +126,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivityForResult(tampilkanGalleryIntent, TAMPILKAN_GALLERY);
                 break;
             case R.id.kirim:
-                Drawable mDrawable = imageView.getDrawable();
-                Bitmap mBitmap = ((BitmapDrawable)mDrawable).getBitmap();
-
+                imageView.setDrawingCacheEnabled(true);
+                Bitmap mBitmap = imageView.getDrawingCache();
                 String path = MediaStore.Images.Media.insertImage(this.getContentResolver(),
                         mBitmap, "Design", null);
-
                 Uri uri = Uri.parse(path);
 
                 Intent share = new Intent(Intent.ACTION_SEND);
                 share.setType("image/*");
                 share.putExtra(Intent.EXTRA_STREAM, uri);
-                share.putExtra(Intent.EXTRA_TEXT, "I found something cool!");
+                share.putExtra(Intent.EXTRA_TEXT, "Hai, Saya telah mengirim gambar");
                 this.startActivity(Intent.createChooser(share, "Share Your Design!"));
             case R.id.xButton:
                 finish();
@@ -151,7 +144,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
             case AMBIL_FOTO_BESAR:
@@ -177,13 +171,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     videoView.setVisibility(View.INVISIBLE);
                     imageView.setVisibility(View.VISIBLE);
                 }
-                break;
-//            case KIRIM_GAMBAR:
-//                if (resultCode == RESULT_OK) {
-//                    Uri photoUri = data.getData();
-//                    shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, photoUri);
-//                }
-//                break;
         }
     }
 
@@ -191,7 +178,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (mCurrentPhotoPath != null) {
             setPic();
             galleryAddPic();
-            mCurrentPhotoPath = null;
         }
     }
 
@@ -224,6 +210,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void setPic() {
+        File f = setUpPhotoFile();
+        Uri.fromFile(f);
         int targetW = imageView.getWidth();
         int targetH = imageView.getHeight();
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();

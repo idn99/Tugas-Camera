@@ -54,7 +54,6 @@
             android:layout_width="match_parent"
             android:layout_height="394dp"
             android:contentDescription="@string/app_name"
-            android:src="@drawable/ic_launcher_background"
             android:scaleType="fitXY"
             android:visibility="visible"/>
 
